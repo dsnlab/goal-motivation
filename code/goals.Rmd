@@ -1,0 +1,144 @@
+---
+title: "Goals"
+author: "Dani Cosme"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: hide
+    df_print: paged
+    highlight: tango
+    theme: united
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+
+options(scipen=999)
+```
+
+# load packages
+```{r}
+library(pacman)
+pacman::p_load(tidyverse, purrr, fs, knitr, kableExtra, mlVAR, gganimate, tidytext, install = TRUE)
+```
+
+# define aesthetics
+```{r}
+palette = c("#772e25", "#c44536", "#ee9b00", "#197278", "#283d3b")
+
+plot_aes = theme_minimal() +
+  theme(legend.position = "top",
+        legend.text = element_text(size = 8),
+        text = element_text(size = 10, family = "Futura Medium"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.text = element_text(color = "black"),
+        axis.line = element_line(colour = "black"),
+        axis.ticks.y = element_blank())
+```
+
+# load and tidy data
+```{r}
+data = read.csv("../../FP_scripts/behavioral/self_report/scored_full_sample_goals.csv", stringsAsFactors = FALSE)
+
+goals = data %>%
+  filter(grepl("^goal ", scored_scale)) %>%
+  extract(survey_name, c("group", "wave"), ".*(MRI|GPS PLUS) (T[1-4]{1}).*") %>%
+  extract(scored_scale, "goal_number", "goal ([1-2])") %>%
+  filter(!is.na(score)) %>%
+  rename("goal" = score) %>%
+  select(SID, group, wave, goal_number, goal)
+
+words = goals %>%
+  select(SID, group, wave, goal_number, goal) %>%
+  unnest_tokens(word, goal)
+
+goals_ratings = data %>%
+  filter(scale_name == "GPS") %>%
+  extract(survey_name, c("wave", "timepoint"), ".*(T[2-4]) (.*)") %>%
+  extract(scored_scale, c("item", "goal_number"), "(.*) (.*)") %>%
+  select(SID, wave, timepoint, item, goal_number, score) %>%
+  filter(grepl("motivation|progress", item)) %>%
+  mutate(score = as.numeric(score)) %>%
+  spread(item, score) %>%
+  arrange(goal_number, SID) %>%
+  mutate(autonomous_motivation = (`motivation integrated` + `motivation intrinsic`) / 2,
+         controlled_motivation = (`motivation introjected` + `motivation extrinsic`) / 2,
+         timepoint_num = ifelse(timepoint == "Check In", 0, 1),
+         progress = as.numeric(progress)) %>%
+  select(-starts_with("motivation")) %>%
+  group_by(SID, wave, goal_number) %>%
+  fill(autonomous_motivation, controlled_motivation, .direction = "down") %>%
+  ungroup()
+
+between = goals_ratings %>%
+  gather(item, value, contains("motivation")) %>%
+  select(SID, item, value) %>%
+  unique() %>%
+  group_by(SID, item) %>%
+  summarize(mean = mean(value, na.rm = TRUE)) %>%
+  mutate(item = sprintf("%s_between", item)) %>%
+  group_by(item) %>%
+  mutate(mean = scale(mean, center = TRUE, scale = TRUE)) %>%
+  spread(item, mean)
+
+within = goals_ratings %>%
+  gather(item, value, contains("motivation")) %>%
+  group_by(SID, item) %>%
+  mutate(value = scale(value, center = TRUE, scale = TRUE),
+         item = sprintf("%s_within", item)) %>%
+  spread(item, value)
+
+disaggregated = within %>%
+  left_join(., between) %>%
+  left_join(., goals) %>%
+  filter(!is.na(goal))
+```
+
+# save csv files
+```{r}
+write.csv(disaggregated, "../data/disaggregated_data.csv", row.names = FALSE)
+```
+
+# descriptives {.tabset}
+## n participants
+```{r}
+goals %>%
+  select(group, wave, SID) %>%
+  unique() %>%
+  group_by(wave, group) %>%
+  summarize(n = n()) %>%
+  spread(group, n) %>%
+  mutate(total = `GPS PLUS` + MRI)
+```
+
+## n goals
+```{r}
+goals %>%
+  select(group, wave, SID, goal_number) %>%
+  unique() %>%
+  group_by(wave) %>%
+  summarize(n = n())
+```
+
+## n words
+```{r}
+n_words = words %>%
+  group_by(SID, group, wave, goal_number) %>%
+  summarize(n = n())
+
+n_words %>%
+  ggplot(aes(n, fill = wave)) +
+  geom_density(color = NA, alpha = .7) +
+  scale_fill_manual(values = palette) +
+  geom_vline(xintercept = 11) +
+  annotate("text", x = 25, label = "median = 11", y = .06) + 
+  labs(x = "n words", y = "density") +
+  plot_aes
+```
