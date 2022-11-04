@@ -1,0 +1,450 @@
+---
+title: "Goal Project"
+author: "Steven Mesquiti"
+date: "`rSys.Date()`"
+output:
+  html_document:
+    code_folding: hide
+    df_print: paged
+    highlight: tango
+    theme: united
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+---
+```{r setup, include=FALSE, message=FALSE}
+# set chunk options for the document
+# include=FALSE means that this chunk will not show up in the report
+
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, cache = FALSE, dpi = 150, fig.path = "figs/") 
+# echo = TRUE means that the source code will be displayed
+# message = FALSE suppresses messages
+# warning = FALSE suppresses warnings
+# cache = FALSE recompiles from scratch each time you knit 
+# dpi = 150 sets the figure resolution
+# fig.path specifies a directory where figures will be output
+
+options(scipen = 999) #turn off scientific notation
+set.seed(65) #set seed for random number generation
+```
+# Prep data {.tabset}
+## Load necessary packages
+```{r include=FALSE}
+setwd("~/Desktop/goals project") 
+
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("brms")) install.packages("brms")
+if (!require("knitr")) install.packages("knitr")
+if (!require("readr")) install.packages("readr")
+if (!require("kableExtra")) install.packages("kableExtra")
+if (!require("reactable")) install.packages("reactable")
+if (!require("tidybayes")) install.packages("tidybayes")
+if (!require("rstanarm")) install.packages("rstanarm")
+if (!require("httr")) install.packages("httr")
+if (!require("insight")) install.packages("insight")
+if (!require("sjPlot")) install.packages("sjPlot")
+if (!require("bayesplot")) install.packages("bayesplot")
+if (!require("ggpubr")) install.packages("ggpubr")
+
+
+
+library(dplyr)
+library(ggplot2)
+library(brms)
+library(Brobdingnag)
+library(tidyverse)
+library(knitr)
+library(readr)
+library(kableExtra)
+library(reactable)
+library(tidybayes)
+library(rstanarm)
+library(httr)
+library(sjPlot)
+library(bayesplot)
+library(ggpubr)
+
+devtools::install_github("hadley/emo")
+
+source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R")
+
+```
+
+## Define aesthetics
+```{r}
+palette_map = c("#3B9AB2", "#EBCC2A", "#F21A00")
+palette_condition = c("#ee9b00", "#bb3e03", "#005f73")
+
+plot_aes = theme_minimal() +
+  theme(legend.position = "top",
+        legend.text = element_text(size = 12),
+        text = element_text(size = 16, family = "Futura Medium"),
+        axis.text = element_text(color = "black"),
+        axis.line = element_line(colour = "black"),
+        axis.ticks.y = element_blank())
+```
+
+## Load data 
+```{r}
+data <- read_csv("disaggregated_data.csv") #read in data 
+data$timepoint_num <- as.factor(data$timepoint_num) #set as a factor so our graphs can work 
+
+```
+
+## Tidy data
+Data transformations
+
+* None
+
+Exclusions
+
+* No participants were excluded
+
+## Sample size
+```{r}
+sample <- data %>%
+  select(timepoint, SID) %>%
+  unique() %>%
+  group_by(timepoint) %>%
+  dplyr::summarize(n = n()) %>%
+  reactable::reactable(striped = TRUE)
+sample
+```
+
+# Data quality checks {.tabset}
+## Missing data
+```{r}
+data %>%
+  filter(is.na(progress)) %>%
+  group_by(SID,timepoint) %>%
+  dplyr::summarize(n = n()) %>%
+  arrange(-n)
+```
+
+## Outliers {.tabset}
+There do not appear to be obvious outliers
+
+```{r}
+progress <- data %>%
+  ggplot(aes(timepoint, progress, fill = timepoint)) +
+  geom_flat_violin(position = position_nudge(x = .1, y = 0), color = FALSE) +
+  geom_point(aes(color = timepoint), position = position_jitter(width = .05), size = .1, alpha = .1) + 
+  geom_boxplot(width = .1, outlier.shape = NA, fill = NA) +
+  scale_fill_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  labs(x = "") +
+  coord_flip() +
+  plot_aes +
+  theme(legend.position = "none")
+
+autonomous_motivation_within <- data %>%
+  ggplot(aes(timepoint, autonomous_motivation_within, fill = timepoint)) +
+  geom_flat_violin(position = position_nudge(x = .1, y = 0), color = FALSE) +
+  geom_point(aes(color = timepoint), position = position_jitter(width = .05), size = .1, alpha = .1) + 
+  geom_boxplot(width = .1, outlier.shape = NA, fill = NA) +
+  scale_fill_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  labs(x = "") +
+  coord_flip() +
+  plot_aes +
+  theme(legend.position = "none")
+
+controlled_motivation_within  <- data %>%
+  ggplot(aes(timepoint, controlled_motivation_within, fill = timepoint)) +
+  geom_flat_violin(position = position_nudge(x = .1, y = 0), color = FALSE) +
+  geom_point(aes(color = timepoint), position = position_jitter(width = .05), size = .1, alpha = .1) + 
+  geom_boxplot(width = .1, outlier.shape = NA, fill = NA) +
+  scale_fill_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  labs(x = "") +
+  coord_flip() +
+  plot_aes +
+  theme(legend.position = "none")
+
+autonomous_motivation_between <- data %>%
+  ggplot(aes(timepoint, autonomous_motivation_between, fill = timepoint)) +
+  geom_flat_violin(position = position_nudge(x = .1, y = 0), color = FALSE) +
+  geom_point(aes(color = timepoint), position = position_jitter(width = .05), size = .1, alpha = .1) + 
+  geom_boxplot(width = .1, outlier.shape = NA, fill = NA) +
+  scale_fill_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  labs(x = "") +
+  coord_flip() +
+  plot_aes +
+  theme(legend.position = "none")
+
+controlled_motivation_between <- data %>%
+  ggplot(aes(timepoint, controlled_motivation_between, fill = timepoint)) +
+  geom_flat_violin(position = position_nudge(x = .1, y = 0), color = FALSE) +
+  geom_point(aes(color = timepoint), position = position_jitter(width = .05), size = .1, alpha = .1) + 
+  geom_boxplot(width = .1, outlier.shape = NA, fill = NA) +
+  scale_fill_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
+  labs(x = "") +
+  coord_flip() +
+  plot_aes +
+  theme(legend.position = "none")
+
+descriptive_graphs <- ggpubr::ggarrange(progress,autonomous_motivation_within,controlled_motivation_within,
+                                        autonomous_motivation_between,controlled_motivation_between ,ncol=2, nrow=3, common.legend = T, legend = "bottom")
+descriptive_graphs
+```
+# Descriptive statistics  {.tabset}
+## Goal Progress (Rating scale: 0-100%)
+> What percentage of this project is completed right now?
+## Motivation Rating (1 = not at all for this reason, 7 = completely for this reason)
+> Please rate the extent to which you are working on this personal project because:
+
+> It provides you fun and enjoyment
+
+> You really believe it's an important goal to have
+
+> You would feel ashamed, guilty, or anxious if you didn't
+
+> Somebody else wants you to or because the situation demands it
+
+>Items 1 and 2 will be averaged to create an index of autonomous motivation; items 3 and 4 will be averaged to create an index of controlled motivation.
+
+```{r eval=FALSE, include=FALSE}
+#means (need to work on later)
+means = data %>%
+  group_by(timepoint_num) %>%
+  filter(!is.na(progress)) %>%
+  summarize(N = n(),
+            `M (SD)` = sprintf("%s (%s)", round(mean(progress, na.rm = TRUE), 2), round(sd(progress, na.rm = TRUE), 2))) %>%
+  mutate(`scale range` = "0-100") %>%
+  select(`scale range`, everything()) %>%
+  rename("timepoint" = timepoint_num)
+means
+```
+
+
+# Preregistered analyses 
+The following hypotheses are preregistered. The preregistration is available on [OSF](https://osf.io/3pcnj)
+
+## Primary Analyses 
+> We estimated a single model to test H1 and H2 using noninformatie priors (mu = 0, sigma = 5). 
+
+## Hypothesis 1 
+> H1 Between-person: People who tend to have more autonomous goals compared to others will show greater goal progress
+
+## Results {.tabset}
+`r emo::ji("x")` These data are ***not*** consistent with the hypothesis that people who tend to have more autonomous goals compared to others will show greater goal progress
+
+```{r include=FALSE}
+#these options help speed up estimation 
+options(mc.cores = parallel::detectCores())
+
+#####Hypothesis 1 
+#set our weakly informative prior 
+h1_prior <- c(set_prior("normal(0, 5)", class = "b"),
+              set_prior("normal(0, 5)", class = "Intercept")) 
+
+#run our model, which may take a few moments
+mod_h1 <- brm(progress ~ timepoint_num + autonomous_motivation_between + autonomous_motivation_between * timepoint_num + autonomous_motivation_within +
+                autonomous_motivation_within * timepoint_num + (1 + autonomous_motivation_within * timepoint_num | SID), 
+              prior = h1_prior, data = data, sample_prior = TRUE)
+```
+### Look at our model
+```{r}
+mod_h1 #check out our model
+```
+
+### Plot Conditional Effects of Within Person Differences * time (H1)
+```{r}
+####Plotting conditional effects#######################3####
+#between * time 
+between_cond <- conditional_effects(mod_h1, effect = 'autonomous_motivation_between:timepoint_num') #conditional effects 
+est_bw <- as.data.frame(between_cond[[1]])
+cond_between<- ggplot()  +
+  xlab('Change in Within-Person Autonomous Motivation') +
+  ylab('Goal Progress') + 
+  geom_pointrange(aes(autonomous_motivation_between, estimate__, ymin = lower__, ymax = upper__, color = timepoint_num), 
+                  est_bw, position = position_dodge(width = .5)) +theme_minimal() + 
+  scale_colour_manual(values = c('red', 'blue'),
+                      labels = c("Check-in", "Follow-up")) +theme_bw()
+cond_between
+```
+### Plot our Posteriors Between-person differences in autonomous motivation (H1)
+```{r}
+h_posterior <- as.matrix(mod_h1)
+
+h1_plots <- mcmc_areas(h_posterior,
+           pars = c("b_autonomous_motivation_between", 
+                    "b_timepoint_num1:autonomous_motivation_between" ),
+           prob = 0.95, point_est = "median")
+
+
+h1_plots <- h1_plots + labs(x = "Value", y = 'Parameter')+  theme(axis.text=element_text(size=16),
+                                                   axis.title=element_text(size=20,face="bold")) +
+  ggplot2::scale_y_discrete(labels = c("Autonomous Motivation Between", "Autonomous Motivation Between * Time"))
+
+annotate_figure(h1_plots,
+                top = text_grob("Between Person Posterior distributions",  color = "black", face = "bold", size = 20),
+                bottom = text_grob("Note. Estimates presented are medians within the 95% Credible Intervals."
+                                   , color = "Black",
+                                   hjust = 1.1, x = 1, face = "italic", size = 16))
+
+
+h_posteriors <- get_parameters(mod_h1)
+bayestestR::hdi(h_posteriors$b_autonomous_motivation_within)
+```
+### Look at Influence of Priors
+```{r}
+hplot1 <- plot(hypothesis(mod_h1, "autonomous_motivation_between > 0")) #shows how influential our priors were on our posteriors
+hplot2 <- plot(hypothesis(mod_h1,"timepoint_num1:autonomous_motivation_between > 0")) #shows how influential our priors were on our posteriors
+```
+## Hypothesis 2 
+>  H2 Within-person: Goals that are more autonomous compared to a person’s average will be associated with greater progress
+
+## Results {.tabset}
+`r emo::ji("check")` These data are consistent with the hypothesis that thinking about the self-relevance of a message increases its perceived self-relevance
+### Plot Conditional Effects of Within Person Differences * time 
+```{r}
+within_cond <- conditional_effects(mod_h1, effect = 'autonomous_motivation_within:timepoint_num') #conditional effects 
+
+est_within <- as.data.frame(within_cond[[1]])
+cond_within<- ggplot()  +
+  xlab('Change in Within-Person Autonomous Motivation') +
+  ylab('Goal Progress') + 
+  geom_pointrange(aes(autonomous_motivation_within, estimate__, ymin = lower__, ymax = upper__, color = timepoint_num), 
+                  est_within, position = position_dodge(width = .5)) +theme_minimal() + 
+  scale_colour_manual(values = c('red', 'blue'),
+                      labels = c("Check-in", "Follow-up")) +theme_bw()
+cond_within
+```
+### Plot our Posteriors for H2
+```{r}
+#main effect of autonomous(within)
+#Plot posteror 
+h2_plots <- mcmc_areas(h_posterior,
+                       pars = c("b_autonomous_motivation_within", 
+                                "b_timepoint_num1:autonomous_motivation_within",
+                                "sd_SID__autonomous_motivation_within",
+                                "sd_SID__autonomous_motivation_within:timepoint_num1" ),
+                       prob = 0.95, point_est = "median") 
+
+h2_plots <- h2_plots + labs(x = "Value", y = 'Parameter')+  theme(axis.text=element_text(size=16),
+                                                                  axis.title=element_text(size=20,face="bold")) +
+  ggplot2::scale_y_discrete(labels = c("Autonomous Motivation Within", "Autonomous Motivation Within * Time", 
+                                       "Autonomous Motivation Within (Random Effects)", ("Autonomous Motivation Within * Time (Random Effects)")))
+
+annotate_figure(h2_plots,
+                top = text_grob("Within-Person Posterior Distributions ",  color = "black", face = "bold", size = 20),
+                bottom = text_grob("Note. Estimates presented are medians within the 95% Credible Intervals."
+                                   , color = "Black",
+                                   hjust = 2.2, x = 1, face = "italic", size = 16))
+```
+### Look at Infuence of Priors
+```{r}
+hplot3 <- plot(hypothesis(mod_h1,"autonomous_motivation_within > 0")) #shows how influential our priors were on our posteriors
+hplot4 <- plot(hypothesis(mod_h1,"timepoint_num1:autonomous_motivation_within > 0")) #shows how influential our priors were on our posteriors
+```
+
+
+# Exploratory analyses 
+> We will estimate a single model to test E1 and E2. The coefficient that will be interpreted is highlighted for each research question below.
+
+## Exploratory Hypothesis 1 
+> E1 Between-person : Are people who tend to have more controlled goals compared to others more or less successful at pursuing their goals?
+
+```{r}
+####Exploratory###############################################
+e1_prior <- c(set_prior("normal(0, 5)", class = "b"),
+              set_prior("normal(0, 5)", class = "Intercept")) #set our weakly informative prior 
+
+
+#run model
+mod_e1 <- brm(progress ~ timepoint_num + controlled_motivation_between + controlled_motivation_between * timepoint_num + controlled_motivation_within +
+                controlled_motivation_within * timepoint_num + (1 + controlled_motivation_within * timepoint_num | SID),
+              prior  =  e1_prior, data = data, sample_prior = TRUE)
+
+```
+## Results E1 {.tabset}
+> `r emo::ji("x")` These data are ***not*** consistent with the hypothesis that people who tend to have more controlled goals compared to others will show greater goal progress
+
+### Look at our model.
+```{r}
+summary(mod_e1)
+```
+
+### Plot condiitonal effects of Between Person Controlled Motivation * Time
+```{r}
+e_between_cond <- conditional_effects((mod_e1), effect = ('controlled_motivation_between:timepoint_num')) #conditional effects 
+
+est_bw <- as.data.frame(e_between_cond[[1]])
+e_cond_between<- ggplot()  +
+  xlab('Change in Between-Person Controlled Motivation') +
+  ylab('Goal Progress') + 
+  geom_pointrange(aes(controlled_motivation_between, estimate__, ymin = lower__, ymax = upper__, color = timepoint_num), 
+                  est_bw, position = position_dodge(width = .5)) +theme_minimal() + 
+  scale_colour_manual(values = c('red', 'blue'),
+                      labels = c("Check-in", "Follow-up")) +theme_bw()
+e_cond_between
+```
+
+### Plot Posterior for Between Person Differences in Controlled Motivation (E1)
+```{r}
+#E1 Hypothesis
+#Plot posteriors 
+#build matrix to build graphs
+e_posterior <- as.matrix(mod_e1)
+
+e1_plots <- mcmc_areas(e_posterior,
+                       pars = c("b_controlled_motivation_between", 
+                                "b_timepoint_num1:controlled_motivation_between" ),
+                       prob = 0.95, point_est = "median")
+
+
+e1_plots <- e1_plots + labs(x = "Value", y = 'Parameter')+  theme(axis.text=element_text(size=16),
+                                                                  axis.title=element_text(size=20,face="bold")) +
+  ggplot2::scale_y_discrete(labels = c("Controlled Motivation Between", "Controlled Motivation Between * Time"))
+
+annotate_figure(e1_plots,
+                top = text_grob("Between Person Posterior distributions",  color = "black", face = "bold", size = 20),
+                bottom = text_grob("Note. Estimates presented are medians within the 95% Credible Intervals."
+                                   , color = "Black",
+                                   hjust = 1.1, x = 1, face = "italic", size = 16))
+```
+
+## Exploratory Hypothesis 2 
+> E2 Within-person: Do goals that are more controlled compared to a person’s average lead to higher or lower success?
+
+## Results E2 {.tabset}
+> `r emo::ji("x")` These data are consistent with the hypothesis that goals that are more controlled...
+### Plot condiitonal effects of Within-Person Controlled Motivation * Time (E2)
+```{r}
+e_within_cond <- conditional_effects((mod_e1), effect = ('controlled_motivation_within:timepoint_num')) #conditional effects 
+
+est_within <- as.data.frame(e_within_cond[[1]])
+e_cond_within<- ggplot()  +
+  xlab('Change in Within-Person Controlled Motivation') +
+  ylab('Goal Progress') + 
+  geom_pointrange(aes(controlled_motivation_within, estimate__, ymin = lower__, ymax = upper__, color = timepoint_num), 
+                  est_within, position = position_dodge(width = .5)) +theme_minimal() + 
+  scale_colour_manual(values = c('red', 'blue'),
+                      labels = c("Check-in", "Follow-up")) +theme_bw()
+e_cond_within
+```
+### Plot Posteriors for Within-Person Differences in Controlled Motivation (E2)
+```{r}
+e2_plots <- mcmc_areas(e_posterior,
+                       pars = c("b_controlled_motivation_within", 
+                                "b_timepoint_num1:controlled_motivation_within",
+                                "sd_SID__controlled_motivation_within",
+                                "sd_SID__controlled_motivation_within:timepoint_num1" ),
+                       prob = 0.95, point_est = "median") 
+
+
+e2_plots <- e2_plots + labs(x = "Value", y = 'Parameter')+  theme(axis.text=element_text(size=16),
+                                                                  axis.title=element_text(size=20,face="bold")) +
+  ggplot2::scale_y_discrete(labels = c("Controlled Motivation Within", "Controlled Motivation Within * Time", 
+                                       "Controlled Motivation Within (Random Effects)", ("Controlled Motivation Within * Time (Random Effects)")))
+
+annotate_figure(e2_plots,
+                top = text_grob("Within-Person Posterior Distributions ",  color = "black", face = "bold", size = 20),
+                bottom = text_grob("Note. Estimates presented are medians within the 95% Credible Intervals."
+                                   , color = "Black",
+                                   hjust = 2.2, x = 1, face = "italic", size = 16))
+```
