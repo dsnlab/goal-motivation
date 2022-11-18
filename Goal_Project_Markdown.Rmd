@@ -215,7 +215,7 @@ descriptive_graphs
 >Items 1 and 2 will be averaged to create an index of autonomous motivation; items 3 and 4 will be averaged to create an index of controlled motivation.
 
 ```{r}
-#means (need to work on later)
+#means
 means = data %>%
   group_by(timepoint_num) %>%
   filter(!is.na(progress)) %>%
@@ -538,7 +538,6 @@ data %>%
   filter(!is.na(`autonomous motivation (within)`)) %>%
   ggplot(aes(timepoint, progress, color = `autonomous motivation (within)`)) +
   geom_line(aes(group = interaction(SID, goal_number, wave)), alpha = .1) +
-  scale_color_manual(values = palette) +
   plot_aes +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   scale_x_discrete(expand = c(.1, .1)) +
@@ -556,7 +555,6 @@ data %>%
 dplyr::summarize(`mean progress` = mean(progress, na.rm = TRUE)) %>%
   ggplot(aes(timepoint, `mean progress`, color = `autonomous motivation (between)`)) +
   geom_line(aes(group = interaction(SID)), alpha = .5) +
-  scale_color_manual(values = palette) +
   plot_aes +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   scale_x_discrete(expand = c(.1, .1)) +
