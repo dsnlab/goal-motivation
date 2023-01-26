@@ -67,6 +67,7 @@ library(sjPlot)
 library(bayesplot)
 library(ggpubr)
 library(psych)
+library(broom)
 devtools::install_github("hadley/emo")
 
 source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R")
@@ -257,6 +258,7 @@ mod_h1 <- brm(progress ~ timepoint_num + autonomous_motivation_between + autonom
 ### Look at our model
 ```{r}
 mod_h1 #check out our model
+
 ```
 
 ### Plot Conditional Effects of Within Person Differences * time (H1)
