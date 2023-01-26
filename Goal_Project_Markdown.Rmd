@@ -89,7 +89,7 @@ plot_aes = theme_minimal() +
 
 ## Load data 
 ```{r}
-data <- read_csv("disaggregated_data.csv") #read in data 
+data <- read_csv("disaggregated_data.csv")
 data$timepoint_num <- as.factor(data$timepoint_num) #set as a factor so our graphs can work 
 ```
 
