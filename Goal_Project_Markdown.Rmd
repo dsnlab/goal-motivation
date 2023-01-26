@@ -68,6 +68,8 @@ library(bayesplot)
 library(ggpubr)
 library(psych)
 library(broom)
+library(gt) # For gt tables
+library(scales)
 devtools::install_github("hadley/emo")
 
 source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/fb53bd97121f7f9ce947837ef1a4c65a73bffb3f/geom_flat_violin.R")
@@ -87,6 +89,29 @@ plot_aes = theme_minimal() +
         axis.line = element_line(colour = "black"),
         axis.ticks.y = element_blank())
 ```
+
+## Table Function 
+```{r}
+model_table <- function(model) {
+  # Get hypotheses for all fixed effects
+  hh <- hypothesis(model, paste(rownames(fixef(model))[-1], "> 0")) 
+  
+  # Extract data frame of hypothesis results
+  tab <- hh$hypothesis %>% select(-Star)
+  
+  # Set column alignments
+  a <- map_chr(tab, ~ifelse(class(.x)=="numeric", "r","l"))
+  
+  tab <- tab %>% 
+    mutate(across(where(is.numeric), ~comma(., accuracy=0.01))) %>% 
+    rename_all(~gsub("\\.", " ", .))
+  
+  tab %>% 
+    kbl(caption="Model results", align=a) %>% 
+    kable_classic(full_width=FALSE, html_font="Cambria")
+}
+```
+
 
 ## Load data 
 ```{r}
@@ -255,14 +280,19 @@ mod_h1 <- brm(progress ~ timepoint_num + autonomous_motivation_between + autonom
                 autonomous_motivation_within * timepoint_num + (1 + autonomous_motivation_within * timepoint_num | SID), 
               prior = h1_prior, data = data, sample_prior = TRUE)
 ```
-### Look at our model
-```{r}
-mod_h1 #check out our model
 
+### Look at our model
+
+```{r include=FALSE}
+mod_h1 #check out our model
+```
+
+```{r}
+model_table(mod_h1)
 ```
 
 ### Plot Conditional Effects of Within Person Differences * time (H1)
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 ####Plotting conditional effects#######################3####
 
 #between * time
@@ -292,7 +322,7 @@ predicted %>%
 ```
 
 ### Plot our Posteriors Between-person differences in autonomous motivation (H1)
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 h_posterior <- as.matrix(mod_h1)
 
 h1_plots <- mcmc_areas(h_posterior,
@@ -316,7 +346,7 @@ h_posteriors <- get_parameters(mod_h1)
 bayestestR::hdi(h_posteriors$b_autonomous_motivation_within)
 ```
 ### Look at Influence of Priors
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 hplot1 <- plot(hypothesis(mod_h1, "autonomous_motivation_between > 0")) #shows how influential our priors were on our posteriors
 hplot2 <- plot(hypothesis(mod_h1,"timepoint_num1:autonomous_motivation_between > 0")) #shows how influential our priors were on our posteriors
 ```
@@ -328,7 +358,7 @@ hplot2 <- plot(hypothesis(mod_h1,"timepoint_num1:autonomous_motivation_between >
 `r emo::ji("check")` These data are consistent with our second hypothesis as participants who pursued goals that were more autonomous compared to a person’s average reported  greater progress.
 
 ### Plot Conditional Effects of Within Person Differences * time 
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 predicted = ggeffects::ggpredict(mod_h1, c("autonomous_motivation_within [-1, 0, 1]", "timepoint_num"))  %>%
   data.frame() %>%
   mutate(x = ifelse(x == -1, "-1 SD",
@@ -355,7 +385,7 @@ predicted %>%
 ```
 
 ### Plot our Posteriors for H2
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 #main effect of autonomous(within)
 #Plot posteror 
 h2_plots <- mcmc_areas(h_posterior,
@@ -378,7 +408,7 @@ annotate_figure(h2_plots,
 ```
 
 ### Look at Infuence of Priors
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 hplot3 <- plot(hypothesis(mod_h1,"autonomous_motivation_within > 0")) #shows how influential our priors were on our posteriors
 hplot4 <- plot(hypothesis(mod_h1,"timepoint_num1:autonomous_motivation_within > 0")) #shows how influential our priors were on our posteriors
 ```
@@ -390,7 +420,7 @@ hplot4 <- plot(hypothesis(mod_h1,"timepoint_num1:autonomous_motivation_within > 
 ## Exploratory Question 1 
 > E1 Between-person : Do people who tend to have more controlled goals compared to others more or less successful at pursuing their goals?
 
-```{r}
+```{r include=FALSE}
 ####Exploratory###############################################
 e1_prior <- c(set_prior("normal(0, 5)", class = "b"),
               set_prior("normal(0, 5)", class = "Intercept")) #set our weakly informative prior 
@@ -408,11 +438,11 @@ mod_e1 <- brm(progress ~ timepoint_num + controlled_motivation_between + control
 
 ### Look at our model.
 ```{r}
-mod_e1
+model_table(mod_e1)
 ```
 
 ### Plot conditional effects of Between Person Controlled Motivation * Time
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 ###Conditional effects#############################
 
 #between person controlled 
@@ -443,7 +473,7 @@ predicted %>%
 ```
 
 ### Plot Posterior for Between Person Differences in Controlled Motivation (E1)
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 #E1 Hypothesis
 #Plot posteriors 
 #build matrix to build graphs
@@ -473,7 +503,7 @@ annotate_figure(e1_plots,
 > These results showed no main effect of within-person differences in controlled motivation. However, there was a non-zero interaction effect between within-person differences in controlled motivation and time. Specifically, goals that were more controlled compared to a person’s average led to higher success at the follow-up timepoint, whereas goals that were les controlled compared to a person’s average led to higher goal progress at the check-in timepoint.
 
 ### Plot conditional effects of Within-Person Controlled Motivation * Time (E2)
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 ###Plotting controlled within 
 predicted = ggeffects::ggpredict(mod_e1, c("controlled_motivation_within [-1, 0, 1]", "timepoint_num"))  %>%
   data.frame() %>%
@@ -502,7 +532,7 @@ predicted %>%
 ```
 
 ### Plot Posteriors for Within-Person Differences in Controlled Motivation (E2)
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 e2_plots <- mcmc_areas(e_posterior,
                        pars = c("b_controlled_motivation_within", 
                                 "b_timepoint_num1:controlled_motivation_within",
@@ -535,7 +565,7 @@ data <- read_csv("disaggregated_data.csv") %>%
 
 # visualize data {.tabset}
 ## within-person
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 data %>%
   filter(!is.na(`autonomous motivation (within)`)) %>%
   ggplot(aes(timepoint, progress, color = `autonomous motivation (within)`)) +
@@ -550,7 +580,7 @@ data %>%
 ```
 
 ## between-person
-```{r, fig.width=6, fig.height=6}
+```{r, fig.width=12, fig.height=12}
 data %>%
   filter(!is.na(`autonomous motivation (between)`)) %>%
   group_by(SID, timepoint, `autonomous motivation (between)`) %>%
