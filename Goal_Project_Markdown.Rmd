@@ -81,10 +81,18 @@ source("https://gist.githubusercontent.com/benmarwick/2a1bb0133ff568cbe28d/raw/f
 palette_map = c("#3B9AB2", "#EBCC2A", "#F21A00")
 palette_condition = c("#ee9b00", "#bb3e03", "#005f73")
 
-plot_aes = theme_minimal() +
+plot_aes = theme_classic() +
+  theme(legend.position = "right",
+        legend.text = element_text(size = 30),
+        text = element_text(size = 30, family = "Futura Medium"),
+        axis.text = element_text(color = "black"),
+        axis.line = element_line(colour = "black"),
+        axis.ticks.y = element_blank())
+
+plot_aes_indi = theme_classic() +
   theme(legend.position = "top",
-        legend.text = element_text(size = 12),
-        text = element_text(size = 16, family = "Futura Medium"),
+        legend.text = element_text(size = 20),
+        text = element_text(size = 20, family = "Futura Medium"),
         axis.text = element_text(color = "black"),
         axis.line = element_line(colour = "black"),
         axis.ticks.y = element_blank())
@@ -305,7 +313,8 @@ predicted = ggeffects::ggpredict(mod_h1, c("autonomous_motivation_between [-1, 0
          group = recode(group, "0" = "Start", "1" = "Finish"),
          group = factor(group, levels = c("Start", "Finish")))
 
-predicted %>%
+
+auto_between <- predicted %>%
   ggplot(aes(group, predicted, color = x, group = x)) +
   geom_pointrange(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(0.05), size = 1.5) +
   geom_line(position = position_dodge(0.05), size = 1.5) +
@@ -313,12 +322,10 @@ predicted %>%
   scale_x_discrete(expand = c(.1, .1)) +
   coord_cartesian(ylim = c(35, 70)) +
   labs(y = "Goal progress\n", x = "Timepoint") +
-  theme(axis.text=element_text(size=30),
-        axis.title=element_text(size=30,face="bold"),
-        legend.text = element_text(size = 30,face = "bold"),
-        legend.title = element_text(size = 20,face = "bold")) +
-  theme(legend.position = "right") + 
-  theme(axis.text.x = , axis.ticks.x = , axis.text.y = , axis.ticks.y = )
+  plot_aes +
+  ggtitle("Autonmous Motivation (between)") +
+  theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 30))
+  
 ```
 
 ### Plot our Posteriors Between-person differences in autonomous motivation (H1)
@@ -328,7 +335,7 @@ h_posterior <- as.matrix(mod_h1)
 h1_plots <- mcmc_areas(h_posterior,
            pars = c("b_autonomous_motivation_between", 
                     "b_timepoint_num1:autonomous_motivation_between" ),
-           prob = 0.95, point_est = "median")
+           prob = 0.95, point_est = "median") + plot_aes
 
 
 h1_plots <- h1_plots + labs(x = "Value", y = 'Parameter')+  theme(axis.text=element_text(size=16),
@@ -368,7 +375,7 @@ predicted = ggeffects::ggpredict(mod_h1, c("autonomous_motivation_within [-1, 0,
          group = recode(group, "0" = "Start", "1" = "Finish"),
          group = factor(group, levels = c("Start", "Finish")))
 
-predicted %>%
+auto_within <- predicted %>%
   ggplot(aes(group, predicted, color = x, group = x)) +
   geom_pointrange(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(0.05), size = 1.5) +
   geom_line(position = position_dodge(0.05), size = 1.5) +
@@ -376,12 +383,11 @@ predicted %>%
   scale_x_discrete(expand = c(.1, .1)) +
   coord_cartesian(ylim = c(35, 70)) +
   labs(y = "Goal progress\n", x = "Timepoint") +
-  theme(axis.text=element_text(size=30),
-        axis.title=element_text(size=30,face="bold"),
-        legend.text = element_text(size = 30,face = "bold"),
-        legend.title = element_text(size = 20,face = "bold")) +
-  theme(legend.position = "right") + 
-  theme(axis.text.x = , axis.ticks.x = , axis.text.y = , axis.ticks.y = ) 
+  plot_aes +
+  ggtitle("Autonmous Motivation (within)") +
+  theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 30))
+auto_within
+
 ```
 
 ### Plot our Posteriors for H2
@@ -393,7 +399,7 @@ h2_plots <- mcmc_areas(h_posterior,
                                 "b_timepoint_num1:autonomous_motivation_within",
                                 "sd_SID__autonomous_motivation_within",
                                 "sd_SID__autonomous_motivation_within:timepoint_num1" ),
-                       prob = 0.95, point_est = "median") 
+                       prob = 0.95, point_est = "median") + plot_aes
 
 h2_plots <- h2_plots + labs(x = "Value", y = 'Parameter')+  theme(axis.text=element_text(size=16),
                                                                   axis.title=element_text(size=16,face="bold")) +
@@ -411,6 +417,13 @@ annotate_figure(h2_plots,
 ```{r, fig.width=12, fig.height=12}
 hplot3 <- plot(hypothesis(mod_h1,"autonomous_motivation_within > 0")) #shows how influential our priors were on our posteriors
 hplot4 <- plot(hypothesis(mod_h1,"timepoint_num1:autonomous_motivation_within > 0")) #shows how influential our priors were on our posteriors
+```
+
+### Autonomous Graphs
+
+```{r,fig.width=24, fig.height=24}
+auto_graphs <- ggpubr::ggarrange(auto_between,auto_within ,ncol=2, nrow=1, common.legend = T, legend = "right")
+auto_graphs
 ```
 
 
@@ -456,7 +469,8 @@ predicted = ggeffects::ggpredict(mod_e1, c("controlled_motivation_between [-1, 0
          group = recode(group, "0" = "check-in", "1" = "follow-up"),
          group = factor(group, levels = c("check-in", "follow-up")))
 
-predicted %>%
+controlled_between<- 
+  predicted %>%
   ggplot(aes(group, predicted, color = x, group = x)) +
   geom_pointrange(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(0.05), size = 1.5) +
   geom_line(position = position_dodge(0.05), size = 1.5) +
@@ -464,12 +478,11 @@ predicted %>%
   scale_x_discrete(expand = c(.1, .1)) +
   coord_cartesian(ylim = c(35, 70)) +
   labs(y = "Goal progress\n", x = "Timepoint") +
-  theme(axis.text=element_text(size=30),
-        axis.title=element_text(size=30,face="bold"),
-        legend.text = element_text(size = 30,face = "bold"),
-        legend.title = element_text(size = 20,face = "bold")) +
-  theme(legend.position = "right") + 
-  theme(axis.text.x = , axis.ticks.x = , axis.text.y = , axis.ticks.y = )
+  plot_aes +
+  ggtitle("Controlled Motivation (between)") +
+  theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 30))
+
+controlled_between
 ```
 
 ### Plot Posterior for Between Person Differences in Controlled Motivation (E1)
@@ -482,7 +495,7 @@ e_posterior <- as.matrix(mod_e1)
 e1_plots <- mcmc_areas(e_posterior,
                        pars = c("b_controlled_motivation_between", 
                                 "b_timepoint_num1:controlled_motivation_between" ),
-                       prob = 0.95, point_est = "median")
+                       prob = 0.95, point_est = "median") + plot_aes
 
 
 e1_plots <- e1_plots + labs(x = "Value", y = 'Parameter')+  theme(axis.text=element_text(size=16),
@@ -514,7 +527,9 @@ predicted = ggeffects::ggpredict(mod_e1, c("controlled_motivation_within [-1, 0,
          group = recode(group, "0" = "check-in", "1" = "follow-up"),
          group = factor(group, levels = c("check-in", "follow-up")))
 
-predicted %>%
+
+controlled_within <- 
+  predicted %>%
   ggplot(aes(group, predicted, color = x, group = x)) +
   geom_pointrange(aes(ymin = conf.low, ymax = conf.high), position = position_dodge(0.05), size = 1.5) +
   geom_line(position = position_dodge(0.05), size = 1.5) +
@@ -522,12 +537,10 @@ predicted %>%
   scale_x_discrete(expand = c(.1, .1)) +
   coord_cartesian(ylim = c(35, 70)) +
   labs(y = "Goal progress\n", x = "Timepoint") +
-  theme(axis.text=element_text(size=30),
-        axis.title=element_text(size=30,face="bold"),
-        legend.text = element_text(size = 30,face = "bold"),
-        legend.title = element_text(size = 20,face = "bold")) +
-  theme(legend.position = "right") + 
-  theme(axis.text.x = , axis.ticks.x = , axis.text.y = , axis.ticks.y = )
+  plot_aes +
+  ggtitle("Controlled Motivation (Within)") +
+  theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 30))
+controlled_within
 
 ```
 
@@ -538,7 +551,7 @@ e2_plots <- mcmc_areas(e_posterior,
                                 "b_timepoint_num1:controlled_motivation_within",
                                 "sd_SID__controlled_motivation_within",
                                 "sd_SID__controlled_motivation_within:timepoint_num1" ),
-                       prob = 0.95, point_est = "median") 
+                       prob = 0.95, point_est = "median") + plot_aes
 
 
 e2_plots <- e2_plots + labs(x = "Value", y = 'Parameter')+  theme(axis.text=element_text(size=16),
@@ -553,6 +566,13 @@ annotate_figure(e2_plots,
                                    hjust = 2.2, x = 1, face = "italic", size = 16))
 ```
 
+### Controlled Graphs
+```{r,fig.width=24, fig.height=24}
+controlled_graphs <- ggpubr::ggarrange(controlled_between,controlled_within ,ncol=2, nrow=1, common.legend = T, legend = "right")
+controlled_graphs
+```
+
+
 # Individual-level analyses 
 ```{r}
 data <- read_csv("disaggregated_data.csv") %>%
@@ -566,33 +586,43 @@ data <- read_csv("disaggregated_data.csv") %>%
 # visualize data {.tabset}
 ## within-person
 ```{r, fig.width=12, fig.height=12}
-data %>%
+within<- 
+  data %>%
   filter(!is.na(`autonomous motivation (within)`)) %>%
   ggplot(aes(timepoint, progress, color = `autonomous motivation (within)`)) +
   geom_line(aes(group = interaction(SID, goal_number, wave)), alpha = .1) +
-  plot_aes +
+  plot_aes_indi +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   scale_x_discrete(expand = c(.1, .1)) +
     theme(axis.text=element_text(size=30),
         axis.title=element_text(size=30,face="bold"),
         legend.text = element_text(size = 30,face = "bold"),
-        legend.title = element_text(size = 20,face = "bold"))
+        legend.title = element_text(size = 30,face = "bold"))
+within
 ```
 
 ## between-person
 ```{r, fig.width=12, fig.height=12}
-data %>%
+between <- 
+  data %>%
   filter(!is.na(`autonomous motivation (between)`)) %>%
   group_by(SID, timepoint, `autonomous motivation (between)`) %>%
 dplyr::summarize(`mean progress` = mean(progress, na.rm = TRUE)) %>%
   ggplot(aes(timepoint, `mean progress`, color = `autonomous motivation (between)`)) +
   geom_line(aes(group = interaction(SID)), alpha = .5) +
-  plot_aes +
+  plot_aes_indi +
   guides(colour = guide_legend(override.aes = list(alpha = 1))) +
   scale_x_discrete(expand = c(.1, .1)) +
   theme(axis.text=element_text(size=30),
         axis.title=element_text(size=30,face="bold"),
         legend.text = element_text(size = 30,face = "bold"),
-        legend.title = element_text(size = 20,face = "bold"))
+        legend.title = element_text(size = 30,face = "bold"))
+between
+```
+
+## Plots 
+```{r,fig.width=24, fig.height=24}
+indi_graphs <- ggpubr::ggarrange(between,within ,ncol=2, nrow=1, common.legend = F, legend = "top")
+indi_graphs
 ```
 
