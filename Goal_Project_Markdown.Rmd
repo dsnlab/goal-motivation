@@ -96,6 +96,14 @@ plot_aes_indi = theme_classic() +
         axis.text = element_text(color = "black"),
         axis.line = element_line(colour = "black"),
         axis.ticks.y = element_blank())
+
+plot_aes_violinh = theme_classic() +
+  theme(legend.position = "top",
+        legend.text = element_text(size = 16),
+        text = element_text(size = 16, family = "Futura Medium"),
+        axis.text = element_text(color = "black"),
+        axis.line = element_line(colour = "black"),
+        axis.ticks.y = element_blank())
 ```
 
 ## Table Function 
@@ -172,7 +180,7 @@ progress <- data %>%
   scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
   labs(x = "") +
   coord_flip() +
-  plot_aes +
+  plot_aes_violinh +
   theme(legend.position = "none")
 
 autonomous_motivation_within <- data %>%
@@ -184,7 +192,7 @@ autonomous_motivation_within <- data %>%
   scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
   labs(x = "") +
   coord_flip() +
-  plot_aes +
+  plot_aes_violinh +
   theme(legend.position = "none")
 
 controlled_motivation_within  <- data %>%
@@ -196,7 +204,7 @@ controlled_motivation_within  <- data %>%
   scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
   labs(x = "") +
   coord_flip() +
-  plot_aes +
+  plot_aes_violinh +
   theme(legend.position = "none")
 
 autonomous_motivation_between <- data %>%
@@ -208,7 +216,7 @@ autonomous_motivation_between <- data %>%
   scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
   labs(x = "") +
   coord_flip() +
-  plot_aes +
+  plot_aes_violinh +
   theme(legend.position = "none")
 
 controlled_motivation_between <- data %>%
@@ -220,7 +228,7 @@ controlled_motivation_between <- data %>%
   scale_color_manual(values = wesanderson::wes_palette("Zissou1", n = 4, type = "continuous")) +
   labs(x = "") +
   coord_flip() +
-  plot_aes +
+  plot_aes_violinh +
   theme(legend.position = "none")
 
 descriptive_graphs <- ggpubr::ggarrange(progress,autonomous_motivation_within,controlled_motivation_within,
