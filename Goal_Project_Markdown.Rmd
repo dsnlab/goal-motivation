@@ -26,6 +26,7 @@ knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, cache = FAL
 # fig.path specifies a directory where figures will be output
 
 options(scipen = 999) #turn off scientific notation
+options(repos = c(CRAN = "https://cran.rstudio.com/"))
 set.seed(65) #set seed for random number generation
 ```
 # Prep data {.tabset}
@@ -63,7 +64,7 @@ library(reactable)
 library(tidybayes)
 library(rstanarm)
 library(httr)
-library(sjPlot)
+#library(sjPlot)
 library(bayesplot)
 library(ggpubr)
 library(psych)
@@ -308,6 +309,7 @@ model_table(mod_h1)
 ```
 
 ### Plot Conditional Effects of Within Person Differences * time (H1)
+
 ```{r, fig.width=12, fig.height=12}
 ####Plotting conditional effects#######################3####
 
@@ -333,6 +335,8 @@ auto_between <- predicted %>%
   plot_aes +
   ggtitle("Autonmous Motivation (between)") +
   theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 30))
+
+auto_between
   
 ```
 
@@ -548,6 +552,7 @@ controlled_within <-
   plot_aes +
   ggtitle("Controlled Motivation (Within)") +
   theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 30))
+
 controlled_within
 
 ```
@@ -594,6 +599,7 @@ data_ind <- read_csv("disaggregated_data.csv") %>%
 ```
 
 # visualize data {.tabset}
+
 ## within-person
 ```{r, fig.width=12, fig.height=12}
 within<- 
@@ -627,6 +633,7 @@ dplyr::summarize(`mean progress` = mean(progress, na.rm = TRUE)) %>%
         axis.title=element_text(size=30,face="bold"),
         legend.text = element_text(size = 30,face = "bold"),
         legend.title = element_text(size = 30,face = "bold"))
+between
 ```
 
 ## Plots 
@@ -668,6 +675,7 @@ am_between <-
   scale_color_manual(name = "Motivation", values = palette_condition) +
   scale_x_discrete(expand = c(.1, .1)) +
   labs(y = "Goal progress\n", x = "Timepoint") +
+  coord_cartesian(ylim = c(0, 100)) +
   plot_aes +
   ggtitle("Autonomous (between)") +
   theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 20),
@@ -695,13 +703,14 @@ predicted = ggeffects::ggpredict(mod_h1, c("autonomous_motivation_within [-1, 0,
 am_within <- 
   predicted %>%
   ggplot(aes(group, predicted)) +
-  geom_line(data = filter(between, split == "high"), aes(group = interaction(SID)), alpha = .25, color = palette_condition[3]) +
-  geom_line(data = filter(between, split == "low"), aes(group = interaction(SID)), alpha = .25, color = palette_condition[1]) +
+  geom_line(data = filter(within, split == "high"), aes(group = interaction(SID)), alpha = .25, color = palette_condition[3]) +
+  geom_line(data = filter(within, split == "low"), aes(group = interaction(SID)), alpha = .25, color = palette_condition[1]) +
   geom_pointrange(aes(color = x, group = x, ymin = conf.low, ymax = conf.high), position = position_dodge(0.05), size = 1) +
   geom_line(aes(color = x, group = x), position = position_dodge(0.05), size = 1.5) +
   scale_color_manual(name = "Motivation", values = palette_condition) +
   scale_x_discrete(expand = c(.1, .1)) +
   labs(y = "Goal progress\n", x = "Timepoint") +
+  coord_cartesian(ylim = c(0, 100)) +
   plot_aes +
   ggtitle("Autonomous (within)") +
   theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 20),
@@ -714,7 +723,7 @@ am_graphs
 
 ## Controlled Motivation 
 
-```{r, fig.width=10, fig.height=10}
+```{r, fig.width=12, fig.height=12}
 #raw data
 between <- data_ind %>%
   filter(!is.na(`controlled motivation (between)`)) %>%
@@ -743,6 +752,7 @@ cm_between <-
   scale_color_manual(name = "Motivation", values = palette_condition) +
   scale_x_discrete(expand = c(.1, .1)) +
   labs(y = "Goal progress\n", x = "Timepoint") +
+  coord_cartesian(ylim = c(0,100)) +
   plot_aes +
   ggtitle("Controlled (between)") +
   theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 20),
@@ -770,13 +780,14 @@ predicted = ggeffects::ggpredict(mod_e1, c("controlled_motivation_within [-1, 0,
 cm_within <- 
   predicted %>%
   ggplot(aes(group, predicted)) +
-  geom_line(data = filter(between, split == "high"), aes(group = interaction(SID)), alpha = .25, color = palette_condition[3]) +
-  geom_line(data = filter(between, split == "low"), aes(group = interaction(SID)), alpha = .25, color = palette_condition[1]) +
+  geom_line(data = filter(within, split == "high"), aes(group = interaction(SID)), alpha = .25, color = palette_condition[3]) +
+  geom_line(data = filter(within, split == "low"), aes(group = interaction(SID)), alpha = .25, color = palette_condition[1]) +
   geom_pointrange(aes(color = x, group = x, ymin = conf.low, ymax = conf.high), position = position_dodge(0.05), size = 1) +
   geom_line(aes(color = x, group = x), position = position_dodge(0.05), size = 1.5) +
   scale_color_manual(name = "Motivation", values = palette_condition) +
   scale_x_discrete(expand = c(.1, .1)) +
   labs(y = "Goal progress\n", x = "Timepoint") +
+  coord_cartesian(ylim = c(0, 100)) +
   plot_aes +
   ggtitle("Controlled (within)") +
   theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 20),
@@ -784,5 +795,11 @@ cm_within <-
 
 cm_graphs <- ggpubr::ggarrange(cm_between,cm_within ,ncol=2, nrow=1, common.legend = T, legend = "top")
 cm_graphs
+```
+
+## All together
+```{r fig.height=10, message=FALSE}
+all_graphs <- ggpubr::ggarrange(am_graphs, cm_graphs,col = 2, nrow=2,common.legend = T, legend = "top")
+all_graphs
 ```
 
