@@ -798,7 +798,11 @@ cm_graphs
 ```
 
 ## All together
+<<<<<<< HEAD
 ```{r fig.height=10, message=FALSE}
+=======
+```{r,fig.width=10, fig.height=10}
+>>>>>>> 416bd2651998f92366872cae9bd0a05688533084
 all_graphs <- ggpubr::ggarrange(am_graphs, cm_graphs,col = 2, nrow=2,common.legend = T, legend = "top")
 all_graphs
 ```
