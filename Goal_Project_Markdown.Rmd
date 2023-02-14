@@ -17,7 +17,8 @@ output:
 # set chunk options for the document
 # include=FALSE means that this chunk will not show up in the report
 
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, cache = FALSE, dpi = 150, fig.path = "figs/") 
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, cache = F #let's us save old models. only wanna do this when models are finalized
+                      , dpi = 150, fig.path = "figs/") 
 # echo = TRUE means that the source code will be displayed
 # message = FALSE suppresses messages
 # warning = FALSE suppresses warnings
@@ -646,7 +647,7 @@ indi_graphs
 
 ## Autonomous Motivation 
 
-```{r,fig.width=10, fig.height=10}
+```{r,fig.width=14, fig.height=16}
 #raw data
 between <- data_ind %>%
   filter(!is.na(`autonomous motivation (between)`)) %>%
@@ -716,14 +717,14 @@ am_within <-
   theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 20),
         legend.position = "top")
 
-am_graphs <- ggpubr::ggarrange(am_between,am_within ,ncol=2, nrow=1, common.legend = T, legend = "top")
+am_graphs <- ggpubr::ggarrange(am_between,am_within ,ncol=1, nrow=2, common.legend = T, legend = "top")
 am_graphs
 
 ```
 
 ## Controlled Motivation 
 
-```{r, fig.width=12, fig.height=12}
+```{r,fig.width=14, fig.height=16}
 #raw data
 between <- data_ind %>%
   filter(!is.na(`controlled motivation (between)`)) %>%
@@ -793,17 +794,13 @@ cm_within <-
   theme(plot.title = element_text(hjust = 0.5,face = "bold", size = 20),
         legend.position = "top")
 
-cm_graphs <- ggpubr::ggarrange(cm_between,cm_within ,ncol=2, nrow=1, common.legend = T, legend = "top")
+cm_graphs <- ggpubr::ggarrange(cm_between,cm_within ,ncol=1, nrow=2, common.legend = T, legend = "top")
 cm_graphs
 ```
 
 ## All together
-<<<<<<< HEAD
-```{r fig.height=10, message=FALSE}
-=======
-```{r,fig.width=10, fig.height=10}
->>>>>>> 416bd2651998f92366872cae9bd0a05688533084
-all_graphs <- ggpubr::ggarrange(am_graphs, cm_graphs,col = 2, nrow=2,common.legend = T, legend = "top")
+```{r fig.height=20, fig.width=28, message=FALSE}
+all_graphs <- ggpubr::ggarrange(am_between,am_within,cm_between,cm_within,col = 2, nrow=2,common.legend = T, legend = "top")
 all_graphs
 ```
 
