@@ -296,13 +296,19 @@ h1_prior <- c(set_prior("normal(0, 5)", class = "b"),
 #run our model, which may take a few moments
 mod_h1 <- brm(progress ~ timepoint_num + autonomous_motivation_between + autonomous_motivation_between * timepoint_num + autonomous_motivation_within +
                 autonomous_motivation_within * timepoint_num + (1 + autonomous_motivation_within * timepoint_num | SID), 
-              prior = h1_prior, data = data, sample_prior = TRUE)
+              prior = h1_prior, data = data, sample_prior = TRUE,  chains = 4,
+  iter = 1e4,
+  warmup = 1000)
 ```
 
 ### Look at our model
 
 ```{r include=FALSE}
 mod_h1 #check out our model
+
+### look up how to report this 
+
+loo(mod_h1)
 ```
 
 ```{r}
@@ -455,7 +461,9 @@ e1_prior <- c(set_prior("normal(0, 5)", class = "b"),
 #run model
 mod_e1 <- brm(progress ~ timepoint_num + controlled_motivation_between + controlled_motivation_between * timepoint_num + controlled_motivation_within +
                 controlled_motivation_within * timepoint_num + (1 + controlled_motivation_within * timepoint_num | SID),
-              prior  =  e1_prior, data = data, sample_prior = TRUE)
+              prior  =  e1_prior, data = data, sample_prior = TRUE,chains = 4,
+  iter = 1e4,
+  warmup = 1000)
 
 ```
 
